@@ -9,10 +9,95 @@ white_color = (255,255,255)
 process_running = True
 active_chessman = None
 active_cell = None
+active_player = "white"
+def has_chessmate_on_way(pos,new_pos,direction):
+    x_speed = 0
+    y_speed = 0
+    if "left" in direction:
+        x_speed-=1
+    if "right" in direction:
+        x_speed+=1
+    if "up" in direction:
+        y_speed-=1
+    if "down" in direction:
+        y_speed +=1
+    while True:
+        if not 0 <= pos[1] + y_speed < field.height or not 0 <= pos[0] + x_speed < field.width:
+            break
+        if field.field[pos[1]+y_speed][pos[0]+x_speed] != 0:
+            if field.field[pos[1]+y_speed][pos[0]+x_speed][0] != active_player and pos[1]+y_speed ==new_pos[1] and pos[0]+x_speed == new_pos[0]:
+                return "take"
+            else:
+                return True
+        else:
+            if pos[1] + y_speed == new_pos[1] and pos[0] + x_speed == new_pos[0]:
+                break
+            pos=(pos[0]+x_speed,pos[1]+y_speed)
+    return False
+
+def has_chessmate_on_way_for_pawn(pos,direction,new_pos):
+    y_speed = 0
+    x_speed =0
+    if "up" in direction:
+        y_speed-=1
+    if "down" in direction:
+        y_speed+=1
+    if "left" in direction:
+        x_speed-=1
+    if "right" in direction:
+        x_speed += 1
+    if abs(new_pos[1]-pos[1]) ==2:
+        if x_speed == 0:
+            if x_speed != 0:
+                if field.field[pos[1] + 2*y_speed][pos[0] + x_speed][0] != active_player:
+                    return "take"
+                return True
+            return False
+    if field.field[pos[1]+y_speed][pos[0]+x_speed] != 0:
+        if x_speed !=0:
+            if field.field[pos[1]+y_speed][pos[0]+x_speed][0] != active_player:
+                return "take"
+        return True
+    return False
 class ChessMan:
     def __init__(self,x,y):
         self.x = x
         self.y = y
+    def move(self,new_pos):
+        field.field[self.y][self.x] = 0
+        self.x, self.y = new_pos[0], new_pos[1]
+
+def get_direction(pos,new_pos):
+    if new_pos == pos:
+        return None
+    if pos[0] == new_pos[0]:
+        if new_pos[1] < pos[1]:
+            return "up"
+        elif new_pos[1] > pos[1]:
+            return "down"
+    if pos[1] == new_pos[1]:
+        if new_pos[0] > pos[1]:
+            return "right"
+        elif new_pos[0] < pos[1]:
+            return "left"
+    if new_pos[0] > pos[0] and new_pos[1] < pos[1]:
+        return "right up"
+    if new_pos[0] < pos[0] and new_pos[1] < pos[1]:
+        return "left up"
+    if new_pos[0] < pos[0] and new_pos[1] > pos[1]:
+        return "left down"
+    else:
+        return "right down"
+def take_chessman(pos):
+    if field.field[pos[1]][pos[0]][0] == "white":
+        for chessman in field.white_chessmans:
+            if pos[0] == chessman.x and pos[1] == chessman.y:
+                del (field.white_chessmans[field.white_chessmans.index(chessman)])
+    else:
+        for chessman in field.black_chessmans:
+            if pos[0] == chessman.x and pos[1] == chessman.y:
+                del (field.black_chessmans[field.black_chessmans.index(chessman)])
+
 class King(ChessMan):
     def __init__(self,x,y,color):
         super(King, self).__init__(x,y)
@@ -20,9 +105,22 @@ class King(ChessMan):
             self.image=pics.black_king
         else:
             self.image=pics.white_king
-    def move(self,new_x,new_y):
-        if (abs(new_x-self.x) == 1 and self.y == new_y) or (abs(new_y-self.y) == 1 and self.x == new_x):
-            self.x,self.y = new_x, new_y
+    def move(self,new_pos):
+        super(King, self).move(new_pos)
+        field.field[self.y][self.x] = (active_player, "k")
+    def is_can_move(self,new_pos):
+        # if (abs(new_x-self.x) == 1 and self.y == new_y) or (abs(new_y-self.y) == 1 and self.x == new_x):
+        direction = get_direction((self.x, self.y), new_pos)
+        if direction:
+            if abs(new_pos[0]-self.x) == 1 or abs(new_pos[1]-self.y) == 1:
+                res = has_chessmate_on_way((self.x, self.y), new_pos, direction)
+                if res == "take":
+                    take_chessman(new_pos)
+                    return True
+                if not res:
+                    return True
+                else:
+                    return False
 class Queen(ChessMan):
     def __init__(self,x,y,color):
         super(Queen, self).__init__(x,y)
@@ -30,10 +128,22 @@ class Queen(ChessMan):
             self.image=pics.black_queen
         else:
             self.image=pics.white_queen
-    def move(self,new_x,new_y):
-        if (abs(new_x-self.x) == abs(new_y-self.y) and new_x != self.x and new_y != self.y) or \
-                ((abs(new_x-self.x) !=0 and abs(new_y-self.y)==0) or(abs(new_x-self.x) ==0 and abs(new_y-self.y)!=0)):
-            self.x,self.y = new_x, new_y
+    def move(self,new_pos):
+        super(Queen, self).move(new_pos)
+        field.field[self.y][self.x] = (active_player, "q")
+    def is_can_move(self,new_pos):
+        direction = get_direction((self.x,self.y),new_pos)
+        if direction:
+            res = has_chessmate_on_way((self.x,self.y),new_pos,direction)
+            if res == "take":
+                take_chessman(new_pos)
+                return True
+            if not res:
+                return True
+            else:
+                return False
+
+                # return True
 class Castle(ChessMan):
     def __init__(self,x,y,color):
         super(Castle, self).__init__(x,y)
@@ -41,9 +151,24 @@ class Castle(ChessMan):
             self.image=pics.black_castle
         else:
             self.image=pics.white_castle
-    def move(self,new_x,new_y):
-        if (abs(new_x-self.x) !=0 and abs(new_y-self.y)==0) or(abs(new_x-self.x) ==0 and abs(new_y-self.y)!=0):
-            self.x,self.y = new_x, new_y
+    def move(self,new_pos):
+        super(Castle, self).move(new_pos)
+        field.field[self.y][self.x] = (active_player, "c")
+    # def move(self,new_x,new_y):
+    #     if (abs(new_x-self.x) !=0 and abs(new_y-self.y)==0) or(abs(new_x-self.x) ==0 and abs(new_y-self.y)!=0):
+    #         self.x,self.y = new_x, new_y
+    def is_can_move(self,new_pos):
+
+        direction = get_direction((self.x, self.y), new_pos)
+        if direction and len(direction.split()) == 1:
+            res = has_chessmate_on_way((self.x, self.y), new_pos, direction)
+            if res == "take":
+                take_chessman(new_pos)
+                return True
+            if not res:
+                return True
+            else:
+                return False
 class Horse(ChessMan):
     def __init__(self,x,y,color):
         super(Horse, self).__init__(x,y)
@@ -61,9 +186,20 @@ class Bishop(ChessMan):
             self.image=pics.black_bishop
         else:
             self.image=pics.white_bishop
-    def move(self,new_x,new_y):
-        if abs(new_x - self.x) == abs(new_y - self.y) and new_x != self.x and new_y != self.y:
-            self.x,self.y = new_x, new_y
+    def move(self,new_pos):
+        super(Bishop, self).move(new_pos)
+        field.field[self.y][self.x] = (active_player, "b")
+    def is_can_move(self, new_pos):
+        direction = get_direction((self.x, self.y), new_pos)
+        if direction and len(direction.split()) == 2:
+            res = has_chessmate_on_way((self.x, self.y), new_pos, direction)
+            if res == "take":
+                take_chessman(new_pos)
+                return True
+            if not res:
+                return True
+            else:
+                return False
 class Pawn(ChessMan):
     def __init__(self,x,y,color):
         super(Pawn, self).__init__(x,y)
@@ -71,9 +207,21 @@ class Pawn(ChessMan):
             self.image = pics.black_pawn
         else:
             self.image=pics.white_pawn
-    def move(self,new_x,new_y):
-        if abs(new_x - self.x) == 1 and abs(new_y - self.y) == 0:
-            self.x,self.y = new_x, new_y
+    def move(self,new_pos):
+        super(Pawn, self).move(new_pos)
+        field.field[self.y][self.x] = (active_player, "p")
+    def is_can_move(self, new_pos):
+        if (abs(new_pos[1] - self.y) == 1) or \
+                ((abs(new_pos[1] - self.y) == 2) and (self.y ==1 or self.y ==6)):
+            direction = get_direction((self.x, self.y), new_pos)
+            print(direction)
+            if "up" in direction or "down" in direction:
+                res = has_chessmate_on_way_for_pawn((self.x, self.y), direction,new_pos)
+                if not res:
+                    return True
+                else:
+                    return False
+
 class Field:
     def __init__(self,width,height,above_indent=0,left_indent=0):
         self.field = [[0]*width for y in range(height)]
@@ -84,53 +232,59 @@ class Field:
         self.above_indent=above_indent
         self.left_indent=left_indent
     def create_chessmans(self):
+
         self.white_king = King(4,7,        "white")
-        self.white_queen = Queen(3,7,      "white")
-        self.white_castle_l = Castle(0,7,  "white")
-        self.white_horse_l = Horse(1,7,    "white")
-        self.white_bishop_l = Bishop(2,7,  "white")
-        self.white_bishop_r = Bishop(5, 7, "white")
-        self.white_horse_r = Horse(6, 7,   "white")
-        self.white_castle_r = Castle(7, 7, "white")
-        self.white_chessmans=[self.white_king,self.white_queen,self.white_castle_l,self.white_horse_l,self.white_bishop_l,
-                        self.white_castle_r,self.white_horse_r,self.white_bishop_r]
-        for i in range(8):
-            white_pawn = Pawn(i, 6, "white")
-            self.white_chessmans.append(white_pawn)
-        self.black_king = King(4, 0,       "black")
-        self.black_queen = Queen(3, 0,     "black")
-        self.black_castle_l = Castle(0,0, "black")
-        self.black_horse_l = Horse(1, 0,   "black")
-        self.black_bishop_l = Bishop(2, 0, "black")
-        self.black_bishop_r = Bishop(5, 0, "black")
-        self.black_horse_r = Horse(6, 0,   "black")
-        self.black_castle_r = Castle(7, 0, "black")
-        self.black_chessmans = [self.black_king, self.black_queen, self.black_castle_l, self.black_horse_l,
-                                self.black_bishop_l,
-                                self.black_castle_r, self.black_horse_r, self.black_bishop_r]
-        for i in range(8):
-            black_pawn = Pawn(i, 1, "black")
-            self.black_chessmans.append(black_pawn)
-        self.field[0][0] =("b","c")
-        self.field[0][1] =("b","h")
-        self.field[0][2] =("b","b")
-        self.field[0][3] =("b","q")
-        self.field[0][4] =("b","k")
-        self.field[0][5] =("b","b")
-        self.field[0][6] =("b","h")
-        self.field[0][7] =("b","c")
-        self.field[7][0] = ("w", "c")
-        self.field[7][1] = ("w", "h")
-        self.field[7][2] = ("w", "b")
-        self.field[7][3] = ("w", "q")
-        self.field[7][4] = ("w", "k")
-        self.field[7][5] = ("w", "b")
-        self.field[7][6] = ("w", "h")
-        self.field[7][7] = ("w", "c")
-        for i in range(8):
-            self.field[1][i] = ("b", "p")
-        for i in range(8):
-            self.field[6][i] = ("w", "p")
+        self.white_chessmans=[self.white_king]
+        self.black_king = King(0,7,        "black")
+        self.black_chessmans=[self.black_king]
+        self.field[7][4] = ["white","k"]
+        self.field[7][0] = ["black","k"]
+        # self.white_queen = Queen(3,7,      "white")
+        # self.white_castle_l = Castle(0,7,  "white")
+        # self.white_horse_l = Horse(1,7,    "white")
+        # self.white_bishop_l = Bishop(2,7,  "white")
+        # self.white_bishop_r = Bishop(5, 7, "white")
+        # self.white_horse_r = Horse(6, 7,   "white")
+        # self.white_castle_r = Castle(7, 7, "white")
+        # self.white_chessmans=[self.white_king,self.white_queen,self.white_castle_l,self.white_horse_l,self.white_bishop_l,
+        #                 self.white_castle_r,self.white_horse_r,self.white_bishop_r]
+        # for i in range(8):
+        #     white_pawn = Pawn(i, 6, "white")
+        #     self.white_chessmans.append(white_pawn)
+        # self.black_king = King(4, 0,       "black")
+        # self.black_queen = Queen(3, 0,     "black")
+        # self.black_castle_l = Castle(0,0, "black")
+        # self.black_horse_l = Horse(1, 0,   "black")
+        # self.black_bishop_l = Bishop(2, 0, "black")
+        # self.black_bishop_r = Bishop(5, 0, "black")
+        # self.black_horse_r = Horse(6, 0,   "black")
+        # self.black_castle_r = Castle(7, 0, "black")
+        # self.black_chessmans = [self.black_king, self.black_queen, self.black_castle_l, self.black_horse_l,
+        #                         self.black_bishop_l,
+        #                         self.black_castle_r, self.black_horse_r, self.black_bishop_r]
+        # for i in range(8):
+        #     black_pawn = Pawn(i, 1, "black")
+        #     self.black_chessmans.append(black_pawn)
+        # self.field[0][0] =("black","c")
+        # self.field[0][1] =("black","h")
+        # self.field[0][2] =("black","b")
+        # self.field[0][3] =("black","q")
+        # self.field[0][4] =("black","k")
+        # self.field[0][5] =("black","b")
+        # self.field[0][6] =("black","h")
+        # self.field[0][7] =("black","c")
+        # self.field[7][0] = ("white", "c")
+        # self.field[7][1] = ("white", "h")
+        # self.field[7][2] = ("white", "b")
+        # self.field[7][3] = ("white", "q")
+        # self.field[7][4] = ("white", "k")
+        # self.field[7][5] = ("white", "b")
+        # self.field[7][6] = ("white", "h")
+        # self.field[7][7] = ("white", "c")
+        # for i in range(8):
+        #     self.field[1][i] = ("black", "p")
+        # for i in range(8):
+        #     self.field[6][i] = ("white", "p")
     def draw(self):
         for y in range(self.above_indent,screen_height,self.cell_size_y):
             pygame.draw.line(screen, black_color,(self.left_indent,y),(screen_width,y))
@@ -199,8 +353,41 @@ def is_touch_chessman(new_pos):
     return False
 def choose_chessman(pos):
     return field.field[pos[1]][pos[0]]
+def is_your_chessman_touched(pos):
+    if field.field[pos[1]][pos[0]][0] == active_player:
+        return True
+    else:
+        return False
+def change_player():
+    global active_player
+    if active_player == "white":
+        active_player = "black"
+    else:
+        active_player = "white"
+def move(pos,new_pos,active_chessman):
+    is_move=False
+    if active_chessman[0] == "white":
+        for chessman in field.white_chessmans:
+            if pos[0] == chessman.x and pos[1] == chessman.y:
+                if pos[0]==3 and pos[1]==5:
+                    print("asd")
+                if chessman.is_can_move(new_pos):
+                    chessman.move(new_pos)
+                    is_move=True
+                    break
+    else:
+        for chessman in field.black_chessmans:
+            if pos[0] == chessman.x and pos[1] == chessman.y:
+                if chessman.is_can_move(new_pos):
+                    chessman.move(new_pos)
+                    is_move = True
+                    break
+    if is_move:
+        change_player()
+        return True
+
 def events_check():
-    global process_running, active_cell,active_chessman
+    global process_running, active_cell,active_chessman,active_player
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             process_running = False
@@ -212,16 +399,28 @@ def events_check():
                 pos = pygame.mouse.get_pos()
                 if is_correct(pos):
                     new_pos = coordinates_changer(pos)
-                    if is_touch_chessman(new_pos):
-                        if not active_chessman:
-                            active_chessman = choose_chessman(new_pos)
-                        else:
+                    if not active_chessman:
+                        print("active chessman")
+
+                        if is_touch_chessman(new_pos):
+                            if is_your_chessman_touched(new_pos):
+                                print("make active")
+                                active_chessman = choose_chessman(new_pos)
+                                active_cell = new_pos
+
+                    else:
+                        if is_touch_chessman(new_pos):
+                            if is_your_chessman_touched(new_pos):
+                                if new_pos == active_cell:
+                                    active_chessman=None
+                                # active_chessman = choose_chessman(new_pos)
+                                    active_cell = None
+                                    continue
+                        print("progress")
+                        res = move(active_cell,new_pos,active_chessman)
+                        if res:
                             active_chessman=None
-                        if not active_cell:
-                            active_cell = new_pos
-                        else:
                             active_cell = None
-                        print(active_chessman)
 def drawing():
     screen.fill(white_color)
     field.draw()
@@ -230,10 +429,12 @@ def mainloop():
     while process_running:
         events_check()
         drawing()
+        print(active_chessman)
         pygame.time.delay(20)
 if __name__ == '__main__':
     field = Field(8,8,40,20)
     pics=Pics(field.cell_size_x,field.cell_size_y)
     field.create_chessmans()
     # for i in
+
     mainloop()
