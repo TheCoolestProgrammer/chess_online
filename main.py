@@ -13,7 +13,7 @@ active_chessman = None
 active_cell = None
 active_player = "white"
 looks="white"
-def has_chessmate_on_way(pos,new_pos,direction):
+def has_chessman_on_way(pos,new_pos,direction):
     x_speed = 0
     y_speed = 0
     if "left" in direction:
@@ -38,7 +38,7 @@ def has_chessmate_on_way(pos,new_pos,direction):
             pos=(pos[0]+x_speed,pos[1]+y_speed)
     return False
 
-def has_chessmate_on_way_for_pawn(pos,direction,new_pos):
+def has_chessman_on_way_for_pawn(pos,direction,new_pos):
     y_speed = 0
     x_speed =0
     if "up" in direction:
@@ -114,7 +114,7 @@ class King(ChessMan):
         direction = get_direction((self.x, self.y), new_pos)
         if direction:
             if abs(new_pos[0]-self.x) == 1 or abs(new_pos[1]-self.y) == 1:
-                res = has_chessmate_on_way((self.x, self.y), new_pos, direction)
+                res = has_chessman_on_way((self.x, self.y), new_pos, direction)
                 if res == "take":
                     take_chessman(new_pos)
                     return True
@@ -135,7 +135,7 @@ class Queen(ChessMan):
     def is_can_move(self,new_pos):
         direction = get_direction((self.x,self.y),new_pos)
         if direction:
-            res = has_chessmate_on_way((self.x,self.y),new_pos,direction)
+            res = has_chessman_on_way((self.x,self.y),new_pos,direction)
             if res == "take":
                 take_chessman(new_pos)
                 return True
@@ -162,7 +162,7 @@ class Castle(ChessMan):
 
         direction = get_direction((self.x, self.y), new_pos)
         if direction and len(direction.split()) == 1:
-            res = has_chessmate_on_way((self.x, self.y), new_pos, direction)
+            res = has_chessman_on_way((self.x, self.y), new_pos, direction)
             if res == "take":
                 take_chessman(new_pos)
                 return True
@@ -177,9 +177,29 @@ class Horse(ChessMan):
             self.image=pics.black_horse
         else:
             self.image=pics.white_horse
-    def move(self,new_x,new_y):
-        if (abs(new_x-self.x) == 1 and abs(new_y-self.y)==2) or (abs(new_x-self.x) == 2 and abs(new_y-self.y)==1):
-            self.x,self.y = new_x, new_y
+    def move(self,new_pos):
+            # self.x,self.y = new_pos[0], new_pos[1]
+        super(Horse, self).move(new_pos)
+        field.field[self.y][self.x] = (active_player, "h")
+    def is_can_move(self,new_pos):
+        if (abs(new_pos[0]-self.x) == 1 and abs(new_pos[1]-self.y)==2) or (abs(new_pos[0]-self.x) == 2 and abs(new_pos[1]-self.y)==1):
+        # direction = get_direction((self.x, self.y), new_pos)
+        # if direction and len(direction.split()) == 1:
+        #     res = has_chessman_on_way((self.x, self.y), new_pos, direction)
+            if field.field[new_pos[1]][new_pos[0]] !=0:
+                if field.field[new_pos[1]][new_pos[0]][0] != active_player:
+                    return "take"
+                else:
+                    return False
+            else:
+                return True
+            # if res == "take":
+            #     take_chessman(new_pos)
+            #     return True
+            # if not res:
+            #     return True
+            # else:
+            #     return False
 class Bishop(ChessMan):
     def __init__(self,x,y,color):
         super(Bishop, self).__init__(x,y)
@@ -193,7 +213,7 @@ class Bishop(ChessMan):
     def is_can_move(self, new_pos):
         direction = get_direction((self.x, self.y), new_pos)
         if direction and len(direction.split()) == 2:
-            res = has_chessmate_on_way((self.x, self.y), new_pos, direction)
+            res = has_chessman_on_way((self.x, self.y), new_pos, direction)
             if res == "take":
                 take_chessman(new_pos)
                 return True
@@ -231,7 +251,7 @@ class Pawn(ChessMan):
                     if "down" in direction:
                         passing = True
             if passing:
-                res = has_chessmate_on_way_for_pawn((self.x, self.y), direction,new_pos)
+                res = has_chessman_on_way_for_pawn((self.x, self.y), direction,new_pos)
                 if res == "take":
                     take_chessman(new_pos)
                     return True
@@ -251,12 +271,12 @@ class Field:
         self.left_indent=left_indent
     def create_chessmans(self):
 
-        self.white_king = Pawn(4,7,        "white")
+        self.white_king = Horse(4,7,        "white")
         self.white_chessmans=[self.white_king]
-        self.black_king = Pawn(3,0,        "black")
+        self.black_king = Horse(3,0,        "black")
         self.black_chessmans=[self.black_king]
-        self.field[7][4] = ["white","p"]
-        self.field[0][3] = ["black","p"]
+        self.field[7][4] = ["white","h"]
+        self.field[0][3] = ["black","h"]
         # self.white_queen = Queen(3,7,      "white")
         # self.white_castle_l = Castle(0,7,  "white")
         # self.white_horse_l = Horse(1,7,    "white")
@@ -320,10 +340,10 @@ class Field:
             pos = coordinates_changer_in_pygame(active_cell[0],active_cell[1])
             pygame.draw.rect(screen,yellow_color,(pos[0],pos[1],self.cell_size_x,self.cell_size_y),6)
 
-        for chessmate in self.white_chessmans:
-            screen.blit(chessmate.image,coordinates_changer_in_pygame(chessmate.x,chessmate.y))
-        for chessmate in self.black_chessmans:
-            screen.blit(chessmate.image,coordinates_changer_in_pygame(chessmate.x,chessmate.y))
+        for chessman in self.white_chessmans:
+            screen.blit(chessman.image,coordinates_changer_in_pygame(chessman.x,chessman.y))
+        for chessman in self.black_chessmans:
+            screen.blit(chessman.image,coordinates_changer_in_pygame(chessman.x,chessman.y))
 
 class Pics:
     def __init__(self,width,height):
