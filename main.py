@@ -6,6 +6,8 @@ screen_height = 720
 screen = pygame.display.set_mode((screen_width,screen_height))
 black_color = (0,0,0)
 white_color = (255,255,255)
+yellow_color = (255,255,0)
+red_color=(255,0,0)
 process_running = True
 active_chessman = None
 active_cell = None
@@ -233,12 +235,12 @@ class Field:
         self.left_indent=left_indent
     def create_chessmans(self):
 
-        self.white_king = King(4,7,        "white")
+        self.white_king = Bishop(4,7,        "white")
         self.white_chessmans=[self.white_king]
-        self.black_king = King(0,7,        "black")
+        self.black_king = Bishop(0,7,        "black")
         self.black_chessmans=[self.black_king]
-        self.field[7][4] = ["white","k"]
-        self.field[7][0] = ["black","k"]
+        self.field[7][4] = ["white","b"]
+        self.field[7][0] = ["black","b"]
         # self.white_queen = Queen(3,7,      "white")
         # self.white_castle_l = Castle(0,7,  "white")
         # self.white_horse_l = Horse(1,7,    "white")
@@ -298,6 +300,9 @@ class Field:
                     pygame.draw.rect(screen,black_color,(x,y,field.cell_size_x,field.cell_size_y))
                 else:
                     continue
+        if active_cell:
+            pos = coordinates_changer_in_pygame(active_cell[0],active_cell[1])
+            pygame.draw.rect(screen,yellow_color,(pos[0],pos[1],self.cell_size_x,self.cell_size_y),6)
 
         for chessmate in self.white_chessmans:
             screen.blit(chessmate.image,coordinates_changer_in_pygame(chessmate.x,chessmate.y))
