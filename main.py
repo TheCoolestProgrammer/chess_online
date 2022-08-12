@@ -188,7 +188,8 @@ class Horse(ChessMan):
         #     res = has_chessman_on_way((self.x, self.y), new_pos, direction)
             if field.field[new_pos[1]][new_pos[0]] !=0:
                 if field.field[new_pos[1]][new_pos[0]][0] != active_player:
-                    return "take"
+                    take_chessman(new_pos)
+                    return True
                 else:
                     return False
             else:
@@ -271,58 +272,58 @@ class Field:
         self.left_indent=left_indent
     def create_chessmans(self):
 
-        self.white_king = Horse(4,7,        "white")
-        self.white_chessmans=[self.white_king]
-        self.black_king = Horse(3,0,        "black")
-        self.black_chessmans=[self.black_king]
-        self.field[7][4] = ["white","h"]
-        self.field[0][3] = ["black","h"]
-        # self.white_queen = Queen(3,7,      "white")
-        # self.white_castle_l = Castle(0,7,  "white")
-        # self.white_horse_l = Horse(1,7,    "white")
-        # self.white_bishop_l = Bishop(2,7,  "white")
-        # self.white_bishop_r = Bishop(5, 7, "white")
-        # self.white_horse_r = Horse(6, 7,   "white")
-        # self.white_castle_r = Castle(7, 7, "white")
-        # self.white_chessmans=[self.white_king,self.white_queen,self.white_castle_l,self.white_horse_l,self.white_bishop_l,
-        #                 self.white_castle_r,self.white_horse_r,self.white_bishop_r]
-        # for i in range(8):
-        #     white_pawn = Pawn(i, 6, "white")
-        #     self.white_chessmans.append(white_pawn)
-        # self.black_king = King(4, 0,       "black")
-        # self.black_queen = Queen(3, 0,     "black")
-        # self.black_castle_l = Castle(0,0, "black")
-        # self.black_horse_l = Horse(1, 0,   "black")
-        # self.black_bishop_l = Bishop(2, 0, "black")
-        # self.black_bishop_r = Bishop(5, 0, "black")
-        # self.black_horse_r = Horse(6, 0,   "black")
-        # self.black_castle_r = Castle(7, 0, "black")
-        # self.black_chessmans = [self.black_king, self.black_queen, self.black_castle_l, self.black_horse_l,
-        #                         self.black_bishop_l,
-        #                         self.black_castle_r, self.black_horse_r, self.black_bishop_r]
-        # for i in range(8):
-        #     black_pawn = Pawn(i, 1, "black")
-        #     self.black_chessmans.append(black_pawn)
-        # self.field[0][0] =("black","c")
-        # self.field[0][1] =("black","h")
-        # self.field[0][2] =("black","b")
-        # self.field[0][3] =("black","q")
-        # self.field[0][4] =("black","k")
-        # self.field[0][5] =("black","b")
-        # self.field[0][6] =("black","h")
-        # self.field[0][7] =("black","c")
-        # self.field[7][0] = ("white", "c")
-        # self.field[7][1] = ("white", "h")
-        # self.field[7][2] = ("white", "b")
-        # self.field[7][3] = ("white", "q")
-        # self.field[7][4] = ("white", "k")
-        # self.field[7][5] = ("white", "b")
-        # self.field[7][6] = ("white", "h")
-        # self.field[7][7] = ("white", "c")
-        # for i in range(8):
-        #     self.field[1][i] = ("black", "p")
-        # for i in range(8):
-        #     self.field[6][i] = ("white", "p")
+        self.white_king = King(4,7,        "white")
+        # self.white_chessmans=[self.white_king]
+        self.black_king = King(4,0,        "black")
+        # self.black_chessmans=[self.black_king]
+        # self.field[7][4] = ["white","h"]
+        # self.field[0][3] = ["black","h"]
+        self.white_queen = Queen(3,7,      "white")
+        self.white_castle_l = Castle(0,7,  "white")
+        self.white_horse_l = Horse(1,7,    "white")
+        self.white_bishop_l = Bishop(2,7,  "white")
+        self.white_bishop_r = Bishop(5, 7, "white")
+        self.white_horse_r = Horse(6, 7,   "white")
+        self.white_castle_r = Castle(7, 7, "white")
+        self.white_chessmans=[self.white_king,self.white_queen,self.white_castle_l,self.white_horse_l,self.white_bishop_l,
+                        self.white_castle_r,self.white_horse_r,self.white_bishop_r]
+        for i in range(8):
+            white_pawn = Pawn(i, 6, "white")
+            self.white_chessmans.append(white_pawn)
+        self.black_king = King(4, 0,       "black")
+        self.black_queen = Queen(3, 0,     "black")
+        self.black_castle_l = Castle(0,0, "black")
+        self.black_horse_l = Horse(1, 0,   "black")
+        self.black_bishop_l = Bishop(2, 0, "black")
+        self.black_bishop_r = Bishop(5, 0, "black")
+        self.black_horse_r = Horse(6, 0,   "black")
+        self.black_castle_r = Castle(7, 0, "black")
+        self.black_chessmans = [self.black_king, self.black_queen, self.black_castle_l, self.black_horse_l,
+                                self.black_bishop_l,
+                                self.black_castle_r, self.black_horse_r, self.black_bishop_r]
+        for i in range(8):
+            black_pawn = Pawn(i, 1, "black")
+            self.black_chessmans.append(black_pawn)
+        self.field[0][0] =("black","c")
+        self.field[0][1] =("black","h")
+        self.field[0][2] =("black","b")
+        self.field[0][3] =("black","q")
+        self.field[0][4] =("black","k")
+        self.field[0][5] =("black","b")
+        self.field[0][6] =("black","h")
+        self.field[0][7] =("black","c")
+        self.field[7][0] = ("white", "c")
+        self.field[7][1] = ("white", "h")
+        self.field[7][2] = ("white", "b")
+        self.field[7][3] = ("white", "q")
+        self.field[7][4] = ("white", "k")
+        self.field[7][5] = ("white", "b")
+        self.field[7][6] = ("white", "h")
+        self.field[7][7] = ("white", "c")
+        for i in range(8):
+            self.field[1][i] = ("black", "p")
+        for i in range(8):
+            self.field[6][i] = ("white", "p")
     def draw(self):
         for y in range(self.above_indent,screen_height,self.cell_size_y):
             pygame.draw.line(screen, black_color,(self.left_indent,y),(screen_width,y))
