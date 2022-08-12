@@ -12,6 +12,7 @@ process_running = True
 active_chessman = None
 active_cell = None
 active_player = "white"
+looks="white"
 def has_chessmate_on_way(pos,new_pos,direction):
     x_speed = 0
     y_speed = 0
@@ -51,8 +52,6 @@ def has_chessmate_on_way_for_pawn(pos,direction,new_pos):
     if abs(new_pos[1]-pos[1]) ==2:
         if x_speed == 0:
             if x_speed != 0:
-                if field.field[pos[1] + 2*y_speed][pos[0] + x_speed][0] != active_player:
-                    return "take"
                 return True
             return False
     if field.field[pos[1]+y_speed][pos[0]+x_speed] != 0:
@@ -216,9 +215,26 @@ class Pawn(ChessMan):
         if (abs(new_pos[1] - self.y) == 1) or \
                 ((abs(new_pos[1] - self.y) == 2) and (self.y ==1 or self.y ==6)):
             direction = get_direction((self.x, self.y), new_pos)
-            print(direction)
-            if "up" in direction or "down" in direction:
+            passing=False
+            if looks=="white":
+                if active_player=="white":
+                    if "up" in direction:
+                        passing=True
+                else:
+                    if "down" in direction:
+                        passing = True
+            else:
+                if active_player == "black":
+                    if "up" in direction:
+                        passing = True
+                else:
+                    if "down" in direction:
+                        passing = True
+            if passing:
                 res = has_chessmate_on_way_for_pawn((self.x, self.y), direction,new_pos)
+                if res == "take":
+                    take_chessman(new_pos)
+                    return True
                 if not res:
                     return True
                 else:
@@ -235,12 +251,12 @@ class Field:
         self.left_indent=left_indent
     def create_chessmans(self):
 
-        self.white_king = Bishop(4,7,        "white")
+        self.white_king = Pawn(4,7,        "white")
         self.white_chessmans=[self.white_king]
-        self.black_king = Bishop(0,7,        "black")
+        self.black_king = Pawn(3,0,        "black")
         self.black_chessmans=[self.black_king]
-        self.field[7][4] = ["white","b"]
-        self.field[7][0] = ["black","b"]
+        self.field[7][4] = ["white","p"]
+        self.field[0][3] = ["black","p"]
         # self.white_queen = Queen(3,7,      "white")
         # self.white_castle_l = Castle(0,7,  "white")
         # self.white_horse_l = Horse(1,7,    "white")
