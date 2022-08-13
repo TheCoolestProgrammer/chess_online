@@ -13,7 +13,7 @@ process_running = True
 active_chessman = None
 active_cell = None
 active_player = "white"
-looks = "white"
+looks = "black"
 import requests
 import json
 
@@ -583,20 +583,21 @@ def mainloop():
             url = f"{url_base}?method=get&sender={looks}"
             res = requests.request("GET", url)
             res = json.loads(res.text)
-            # print("get---1")
-            # print(res)
+            # print("get---2")
             if res[0]:
                 for i in range(len(res)):
                     res[i] = [int(res[i][j]) for j in range(len(res[i]))]
                 pos = coordinates_changer_from_server(res[0])
                 new_pos = coordinates_changer_from_server(res[1])
                 # res = [int(j) for i in res for j in i]
+                print(pos,new_pos,local_last_way)
                 if pos != local_last_way[0] or new_pos != local_last_way[1]:
+                    print("_______________________________________________________")
                     local_last_way = res
                     if field.field[pos[1]][pos[0]][0] == "white":
                         for chessman in field.white_chessmans:
                             if pos[0] == chessman.x and pos[1] == chessman.y:
-                                if field.field[new_pos[1]][new_pos[0]] != 0:
+                                if field.field[new_pos[1]][new_pos[0]] !=0:
                                     take_chessman(new_pos)
                                 chessman.move(new_pos)
                                 break
